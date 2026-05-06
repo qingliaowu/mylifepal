@@ -1,0 +1,16 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.mylifepal.app"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.mylifepal.app"
+        minSdk 23
+        targetSdk 36
+        versionCode 1
+        versionName "0.1.0"
+    }
+}

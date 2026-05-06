@@ -1,0 +1,9 @@
+<resources>
+    <style name="WatchTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">@color/watch_background</item>
+        <item name="android:colorAccent">#F9C74F</item>
+        <item name="android:navigationBarColor">@color/watch_background</item>
+        <item name="android:statusBarColor">@color/watch_background</item>
+    </style>
+</resources>
