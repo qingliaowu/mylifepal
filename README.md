@@ -2,6 +2,8 @@
 
 MyLifePal is an offline-first Android habit RPG inspired by gamified productivity apps and atomic habit loops. It turns daily habits into tiny identity votes, Timecap-style activity tracking, an adaptive daily coach, daily reminders, emotion check-ins, companion monster growth, XP, coins, gems, reward quests, attributes, achievements, loot drops, chest openings, and Tomato Timer focus sessions.
 
+Users can personalize the app with color presets or custom hex colors for the primary color, accent color, and light background. Theme choices apply to the main Android app and home-screen widget and are included in backups.
+
 Pixel Watch support is included through a separate Wear OS companion app. The watch app focuses on the small-screen core loop: see the next tiny action, complete it with one tap, run a Tomato Timer, record a quick emotion check-in, and keep XP, coins, and streaks moving from the wrist.
 
 Apple Watch support is included through a native SwiftUI watchOS companion scaffold. It uses the same small-screen loop, Tomato Timer, and quick emotion check-in as the Pixel Watch app and stores watch progress offline while future phone-watch sync is planned.
@@ -63,6 +65,7 @@ The UI follows practical HCI principles:
 - Clear feedback after habit, timer, reward, backup, reminder, and companion actions.
 - Error prevention with required-field validation and confirmation before destructive deletes.
 - Accessibility support through content descriptions, selected tab state, headings, and non-announced spacer views.
+- Personalization through readable color presets and custom theme colors with contrast protection.
 - Progressive disclosure: Today recommends one next move while deeper controls live in Habits, Rewards, Mood, Timer, and Progress.
 
 ## Timecap-Style Activity Tracking
@@ -106,7 +109,7 @@ The Data vault keeps users in control of their progress without requiring an acc
 - Import a previously saved backup file through Android's system file picker.
 - Copy the same versioned backup JSON to the clipboard when file access is not convenient.
 - Paste backup JSON to restore manually.
-- Backups include habits, Timecap-style tracking settings and progress, reminder settings, companion monster progress, atomic habit prompts, rewards, quests, timer progress, moods, coins, gems, loot, inventory, achievements, and attribute XP.
+- Backups include habits, Timecap-style tracking settings and progress, reminder settings, color theme, companion monster progress, atomic habit prompts, rewards, quests, timer progress, moods, coins, gems, loot, inventory, achievements, and attribute XP.
 
 ## Emotion Tracker
 
@@ -129,6 +132,7 @@ MyLifePal is designed to compete with the best parts of LifeUp, Timecap, Habitic
 - Adaptive daily coach that turns many systems into one next action.
 - Atomic habit design built into each habit: cue, tiny action, identity, and reward.
 - Daily reminder scheduling for atomic habit cues.
+- User-customizable color themes with presets, custom hex values, backup support, and widget styling.
 - Companion monster growth tied to real habit behavior.
 - Emotion-aware habit loop with mood, energy, stress, notes, and trends.
 - Life-game rewards with quests, gems, loot, chests, crafting, achievements, and real-life rewards.

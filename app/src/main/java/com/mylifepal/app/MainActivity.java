@@ -25,6 +25,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -62,12 +63,19 @@ public class MainActivity extends Activity {
     private static final int MUTED = Color.rgb(93, 105, 98);
     private static final int LINE = Color.rgb(221, 228, 221);
     private static final int FOREST = Color.rgb(46, 125, 104);
-    private static final int MINT = Color.rgb(220, 239, 226);
     private static final int GOLD = Color.rgb(249, 199, 79);
     private static final int CORAL = Color.rgb(238, 116, 94);
     private static final int SKY = Color.rgb(86, 141, 189);
     private static final int LILAC = Color.rgb(139, 116, 190);
-    private static final int ENERGY = Color.rgb(255, 247, 219);
+    private static final ThemePreset[] THEME_PRESETS = {
+            new ThemePreset("Forest", FOREST, GOLD, BG),
+            new ThemePreset("Ocean", Color.rgb(31, 105, 151), Color.rgb(66, 190, 182), Color.rgb(241, 247, 249)),
+            new ThemePreset("Berry", Color.rgb(129, 69, 132), Color.rgb(234, 126, 101), Color.rgb(249, 244, 248)),
+            new ThemePreset("Sunrise", Color.rgb(182, 92, 56), Color.rgb(245, 184, 74), Color.rgb(250, 246, 240)),
+            new ThemePreset("Graphite", Color.rgb(75, 91, 105), Color.rgb(81, 163, 154), Color.rgb(245, 246, 247)),
+            new ThemePreset("Rose", Color.rgb(175, 75, 106), Color.rgb(78, 156, 133), Color.rgb(251, 245, 247))
+    };
+    private static final String[] THEME_CHOICES = {"Forest", "Ocean", "Berry", "Sunrise", "Graphite", "Rose", "Custom"};
 
     private static final String PREFS = "mylifepal_state";
     private static final String STATE_KEY = "state";
@@ -110,19 +118,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Window window = getWindow();
-        window.setStatusBarColor(BG);
-        window.setNavigationBarColor(BG);
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         state = loadState();
+        applySystemBars();
         ReminderScheduler.ensureChannel(this);
         ReminderScheduler.refreshAll(this);
 
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(BG);
+        root.setBackgroundColor(backgroundColor());
         setContentView(root);
         render();
         timerHandler.post(timerRunnable);
@@ -159,6 +163,8 @@ public class MainActivity extends Activity {
     }
 
     private void render() {
+        applySystemBars();
+        root.setBackgroundColor(backgroundColor());
         root.removeAllViews();
         addHeader();
         addTabs();
@@ -198,7 +204,7 @@ public class MainActivity extends Activity {
         header.setPadding(dp(20), dp(20), dp(20), dp(18));
         GradientDrawable headerBg = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
-                new int[]{Color.rgb(35, 93, 79), FOREST, Color.rgb(83, 139, 104)}
+                new int[]{shade(primaryColor(), 0.28f), primaryColor(), tint(primaryColor(), 0.22f)}
         );
         header.setBackground(headerBg);
         root.addView(header, new LinearLayout.LayoutParams(
@@ -215,7 +221,7 @@ public class MainActivity extends Activity {
         titleBlock.addView(text("MyLifePal", 30, Color.WHITE, Typeface.BOLD));
         titleBlock.addView(text("Tiny habits. Real-life levels.", 14, Color.rgb(223, 242, 230), Typeface.NORMAL));
 
-        TextView levelPill = pill("Lv " + getLevel(), Color.rgb(255, 255, 255), FOREST);
+        TextView levelPill = pill("Lv " + getLevel(), Color.rgb(255, 255, 255), primaryColor());
         levelPill.setTextSize(16);
         titleRow.addView(levelPill);
 
@@ -225,7 +231,7 @@ public class MainActivity extends Activity {
         header.addView(identity);
 
         addSpace(header, 14);
-        ProgressBar xpBar = progressBar(xpIntoLevel(), xpPerLevel(), GOLD);
+        ProgressBar xpBar = progressBar(xpIntoLevel(), xpPerLevel(), accentColor());
         header.addView(xpBar, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(8)
@@ -243,11 +249,11 @@ public class MainActivity extends Activity {
         LinearLayout actionRow = horizontal();
         actionRow.setGravity(Gravity.CENTER_VERTICAL);
         header.addView(actionRow);
-        Button addHabit = button("Add habit", Color.WHITE, FOREST);
+        Button addHabit = button("Add habit", Color.WHITE, primaryColor());
         addHabit.setOnClickListener(v -> showHabitDialog(null));
         actionRow.addView(addHabit, new LinearLayout.LayoutParams(0, dp(48), 1f));
         addGap(actionRow, 10);
-        Button quickStart = button("2-min start", GOLD, INK);
+        Button quickStart = button("2-min start", accentColor(), readableTextColor(accentColor()));
         quickStart.setOnClickListener(v -> startTinyAction());
         actionRow.addView(quickStart, new LinearLayout.LayoutParams(0, dp(48), 1f));
     }
@@ -255,7 +261,7 @@ public class MainActivity extends Activity {
     private void addTabs() {
         LinearLayout shell = new LinearLayout(this);
         shell.setPadding(dp(12), dp(10), dp(12), dp(8));
-        shell.setBackgroundColor(BG);
+        shell.setBackgroundColor(backgroundColor());
         root.addView(shell, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -263,7 +269,7 @@ public class MainActivity extends Activity {
 
         LinearLayout tabs = horizontal();
         tabs.setPadding(dp(4), dp(4), dp(4), dp(4));
-        tabs.setBackground(round(Color.rgb(229, 235, 227), 8));
+        tabs.setBackground(round(tint(primaryColor(), 0.86f), 8));
         shell.addView(tabs, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(52)
@@ -271,7 +277,7 @@ public class MainActivity extends Activity {
 
         for (int i = 0; i < TABS.length; i++) {
             final int index = i;
-            Button tab = button(TABS[i], selectedTab == i ? FOREST : Color.TRANSPARENT, selectedTab == i ? Color.WHITE : INK);
+            Button tab = button(TABS[i], selectedTab == i ? primaryColor() : Color.TRANSPARENT, selectedTab == i ? readableTextColor(primaryColor()) : INK);
             tab.setTextSize(13);
             tab.setSelected(selectedTab == i);
             tab.setContentDescription(TABS[i] + (selectedTab == i ? " tab selected" : " tab"));
@@ -295,7 +301,7 @@ public class MainActivity extends Activity {
             done.addView(text("Day cleared", 22, INK, Typeface.BOLD));
             done.addView(text("Every completed habit is one vote for the person you are becoming. Claim a reward or add a tiny next step.", 15, MUTED, Typeface.NORMAL));
             addSpace(done, 12);
-            Button reward = button("Open rewards", FOREST, Color.WHITE);
+            Button reward = button("Open rewards", primaryColor(), readableTextColor(primaryColor()));
             reward.setOnClickListener(v -> {
                 selectedTab = 4;
                 render();
@@ -312,7 +318,7 @@ public class MainActivity extends Activity {
             empty.addView(text("No active habits yet", 20, INK, Typeface.BOLD));
             empty.addView(text("Create one tiny action with a clear cue and a satisfying reward.", 15, MUTED, Typeface.NORMAL));
             addSpace(empty, 12);
-            Button add = button("Create first habit", FOREST, Color.WHITE);
+            Button add = button("Create first habit", primaryColor(), readableTextColor(primaryColor()));
             add.setOnClickListener(v -> showHabitDialog(null));
             empty.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
             content.addView(empty);
@@ -335,12 +341,12 @@ public class MainActivity extends Activity {
 
         LinearLayout copy = vertical();
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        copy.addView(text("MyLifePal Coach", 13, FOREST, Typeface.BOLD));
+        copy.addView(text("MyLifePal Coach", 13, primaryTextColor(), Typeface.BOLD));
         copy.addView(text(coachHeadline(action), 23, INK, Typeface.BOLD));
         TextView reason = text(coachReason(action), 14, MUTED, Typeface.NORMAL);
         reason.setLineSpacing(dp(2), 1f);
         copy.addView(reason);
-        top.addView(pill(todayScore() + "%", coachAccent(action), Color.WHITE));
+        top.addView(pill(todayScore() + "%", coachAccent(action), readableTextColor(coachAccent(action))));
 
         addSpace(coach, 12);
         coach.addView(detailLine("Today score", todayScoreLine()));
@@ -348,7 +354,7 @@ public class MainActivity extends Activity {
         coach.addView(detailLine("Reminder", nextReminderLine()));
 
         addSpace(coach, 12);
-        Button actionButton = button(coachButtonLabel(action), coachAccent(action), Color.WHITE);
+        Button actionButton = button(coachButtonLabel(action), coachAccent(action), readableTextColor(coachAccent(action)));
         actionButton.setOnClickListener(v -> runCoachAction(action));
         coach.addView(actionButton, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
         content.addView(coach);
@@ -356,19 +362,19 @@ public class MainActivity extends Activity {
 
     private void addAtomicCoach(LinearLayout content, Habit habit) {
         LinearLayout coach = card();
-        coach.setBackground(round(Color.rgb(255, 252, 238), 8, GOLD, 2));
+        coach.setBackground(round(accentSoft(), 8, accentColor(), 2));
 
         LinearLayout row = horizontal();
         row.setGravity(Gravity.CENTER_VERTICAL);
         coach.addView(row);
         LinearLayout copy = vertical();
         row.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        copy.addView(text("Atomic loop", 13, FOREST, Typeface.BOLD));
+        copy.addView(text("Atomic loop", 13, primaryTextColor(), Typeface.BOLD));
         copy.addView(text(habit.icon + " " + habit.name, 24, INK, Typeface.BOLD));
         TextView tiny = text("Tiny action: " + habit.tinyAction, 15, MUTED, Typeface.NORMAL);
         tiny.setLineSpacing(dp(2), 1f);
         copy.addView(tiny);
-        TextView points = pill("+" + habit.xp + " XP", FOREST, Color.WHITE);
+        TextView points = pill("+" + habit.xp + " XP", primaryColor(), readableTextColor(primaryColor()));
         row.addView(points);
 
         addSpace(coach, 12);
@@ -379,11 +385,11 @@ public class MainActivity extends Activity {
         addSpace(coach, 12);
         LinearLayout actions = horizontal();
         coach.addView(actions);
-        Button start = button("Start 2 minutes", FOREST, Color.WHITE);
+        Button start = button("Start 2 minutes", primaryColor(), readableTextColor(primaryColor()));
         start.setOnClickListener(v -> Toast.makeText(this, "Start small: " + habit.tinyAction, Toast.LENGTH_LONG).show());
         actions.addView(start, new LinearLayout.LayoutParams(0, dp(48), 1f));
         addGap(actions, 10);
-        Button complete = button("Complete", GOLD, INK);
+        Button complete = button("Complete", accentColor(), readableTextColor(accentColor()));
         complete.setOnClickListener(v -> completeHabit(habit));
         actions.addView(complete, new LinearLayout.LayoutParams(0, dp(48), 1f));
 
@@ -395,15 +401,15 @@ public class MainActivity extends Activity {
         addSectionHeader(content, "Tomato Timer", "A focus tomato turns one tiny action into protected work time.");
 
         LinearLayout timer = card();
-        timer.setBackground(round(Color.rgb(255, 252, 238), 8, GOLD, 2));
+        timer.setBackground(round(accentSoft(), 8, accentColor(), 2));
         LinearLayout top = horizontal();
         top.setGravity(Gravity.CENTER_VERTICAL);
         timer.addView(top);
         LinearLayout copy = vertical();
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        copy.addView(text(timerModeLabel(), 14, FOREST, Typeface.BOLD));
+        copy.addView(text(timerModeLabel(), 14, primaryTextColor(), Typeface.BOLD));
         copy.addView(text(state.timerRunning ? "In focus" : "Ready when you are", 21, INK, Typeface.BOLD));
-        top.addView(pill(state.timerRunning ? "Running" : "Paused", state.timerRunning ? FOREST : Color.rgb(226, 232, 226), state.timerRunning ? Color.WHITE : MUTED));
+        top.addView(pill(state.timerRunning ? "Running" : "Paused", state.timerRunning ? primaryColor() : Color.rgb(226, 232, 226), state.timerRunning ? readableTextColor(primaryColor()) : MUTED));
 
         addSpace(timer, 10);
         TextView clock = text(formatTimer(timerRemainingMillis()), 48, INK, Typeface.BOLD);
@@ -425,7 +431,7 @@ public class MainActivity extends Activity {
         addSpace(timer, 12);
         LinearLayout actions = horizontal();
         timer.addView(actions);
-        Button primary = button(state.timerRunning ? "Pause" : "Start", state.timerRunning ? Color.rgb(233, 238, 234) : FOREST, state.timerRunning ? INK : Color.WHITE);
+        Button primary = button(state.timerRunning ? "Pause" : "Start", state.timerRunning ? Color.rgb(233, 238, 234) : primaryColor(), state.timerRunning ? INK : readableTextColor(primaryColor()));
         primary.setOnClickListener(v -> {
             if (state.timerRunning) {
                 pauseTimer();
@@ -435,7 +441,7 @@ public class MainActivity extends Activity {
         });
         actions.addView(primary, new LinearLayout.LayoutParams(0, dp(48), 1f));
         addGap(actions, 10);
-        Button reset = button("Reset", GOLD, INK);
+        Button reset = button("Reset", accentColor(), readableTextColor(accentColor()));
         reset.setOnClickListener(v -> resetTimer());
         actions.addView(reset, new LinearLayout.LayoutParams(0, dp(48), 1f));
 
@@ -455,7 +461,7 @@ public class MainActivity extends Activity {
     private void addModeButton(LinearLayout parent, int mode, String title, String subtitle) {
         LinearLayout row = card();
         row.setPadding(dp(16), dp(12), dp(16), dp(12));
-        row.setBackground(round(state.timerMode == mode ? MINT : Color.WHITE, 8, state.timerMode == mode ? FOREST : LINE, 1));
+        row.setBackground(round(state.timerMode == mode ? primarySoft() : Color.WHITE, 8, state.timerMode == mode ? primaryColor() : LINE, 1));
         LinearLayout top = horizontal();
         top.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(top);
@@ -463,7 +469,8 @@ public class MainActivity extends Activity {
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         copy.addView(text(title, 17, INK, Typeface.BOLD));
         copy.addView(text(subtitle, 13, MUTED, Typeface.NORMAL));
-        top.addView(pill(formatTimer(timerDurationForMode(mode)), mode == 0 ? FOREST : GOLD, mode == 0 ? Color.WHITE : INK));
+        int pillColor = mode == 0 ? primaryColor() : accentColor();
+        top.addView(pill(formatTimer(timerDurationForMode(mode)), pillColor, readableTextColor(pillColor)));
         row.setOnClickListener(v -> selectTimerMode(mode));
         parent.addView(row);
     }
@@ -473,7 +480,7 @@ public class MainActivity extends Activity {
         MoodEntry todayMood = moodForDate(today());
 
         LinearLayout checkin = card();
-        checkin.setBackground(round(todayMood == null ? Color.rgb(248, 244, 255) : Color.rgb(239, 248, 241), 8, todayMood == null ? LILAC : FOREST, 2));
+        checkin.setBackground(round(todayMood == null ? Color.rgb(248, 244, 255) : primarySoft(), 8, todayMood == null ? LILAC : primaryColor(), 2));
         if (todayMood == null) {
             checkin.addView(text("No check-in today", 24, INK, Typeface.BOLD));
             checkin.addView(text("A ten-second mood check gives the life game a little more self-awareness.", 15, MUTED, Typeface.NORMAL));
@@ -485,10 +492,11 @@ public class MainActivity extends Activity {
                 checkin.addView(text(todayMood.note, 15, MUTED, Typeface.NORMAL));
             }
             addSpace(checkin, 8);
-            checkin.addView(text(moodInsight(todayMood), 14, FOREST, Typeface.BOLD));
+            checkin.addView(text(moodInsight(todayMood), 14, primaryTextColor(), Typeface.BOLD));
         }
         addSpace(checkin, 12);
-        Button checkIn = button(todayMood == null ? "Check in" : "Edit check-in", todayMood == null ? LILAC : FOREST, Color.WHITE);
+        int checkInColor = todayMood == null ? LILAC : primaryColor();
+        Button checkIn = button(todayMood == null ? "Check in" : "Edit check-in", checkInColor, readableTextColor(checkInColor));
         checkIn.setOnClickListener(v -> showMoodDialog(todayMood));
         checkin.addView(checkIn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
         content.addView(checkin);
@@ -557,7 +565,7 @@ public class MainActivity extends Activity {
         copy.addView(text(entry.date, 13, MUTED, Typeface.BOLD));
         copy.addView(text(moodLabel(entry.mood), 18, INK, Typeface.BOLD));
         copy.addView(text("Energy " + entry.energy + "/5  |  Stress " + entry.stress + "/5", 13, MUTED, Typeface.NORMAL));
-        top.addView(pill("Mood " + entry.mood, moodColor(entry.mood), Color.WHITE));
+        top.addView(pill("Mood " + entry.mood, moodColor(entry.mood), readableTextColor(moodColor(entry.mood))));
         if (!entry.note.isEmpty()) {
             addSpace(row, 8);
             row.addView(text(entry.note, 14, MUTED, Typeface.NORMAL));
@@ -567,7 +575,7 @@ public class MainActivity extends Activity {
 
     private void renderHabits(LinearLayout content) {
         addSectionHeader(content, "Habit studio", "Design tiny actions with cues, identity votes, and rewards.");
-        Button add = button("Add habit", FOREST, Color.WHITE);
+        Button add = button("Add habit", primaryColor(), readableTextColor(primaryColor()));
         add.setOnClickListener(v -> showHabitDialog(null));
         content.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
         addSpace(content, 14);
@@ -582,13 +590,13 @@ public class MainActivity extends Activity {
 
     private void addReminderPanel(LinearLayout content) {
         LinearLayout panel = card();
-        panel.setBackground(round(Color.rgb(239, 248, 241), 8, Color.rgb(186, 220, 196), 1));
+        panel.setBackground(round(primarySoft(), 8, tint(primaryColor(), 0.58f), 1));
         panel.addView(text("Reminder rhythm", 20, INK, Typeface.BOLD));
         panel.addView(detailLine("Enabled", enabledReminderCount() + " habits"));
         panel.addView(detailLine("Next", nextReminderLine()));
         panel.addView(detailLine("Permission", notificationsAllowed() ? "Notifications allowed" : "Notifications need approval"));
         addSpace(panel, 12);
-        Button allow = button(notificationsAllowed() ? "Refresh reminders" : "Allow notifications", notificationsAllowed() ? Color.rgb(233, 238, 234) : FOREST, notificationsAllowed() ? INK : Color.WHITE);
+        Button allow = button(notificationsAllowed() ? "Refresh reminders" : "Allow notifications", notificationsAllowed() ? Color.rgb(233, 238, 234) : primaryColor(), notificationsAllowed() ? INK : readableTextColor(primaryColor()));
         allow.setOnClickListener(v -> {
             if (notificationsAllowed()) {
                 ReminderScheduler.refreshAll(this);
@@ -620,13 +628,13 @@ public class MainActivity extends Activity {
         addSectionHeader(content, "Reward shop", "Spend coins on things that make good habits satisfying.");
 
         LinearLayout wallet = card();
-        wallet.setBackground(round(ENERGY, 8));
+        wallet.setBackground(round(accentSoft(), 8));
         wallet.addView(text(state.coins + " coins, " + state.gems + " gems available", 24, INK, Typeface.BOLD));
         wallet.addView(text("Keep rewards concrete: a walk, a book chapter, a favorite snack, a game session, or money set aside.", 15, MUTED, Typeface.NORMAL));
         content.addView(wallet);
         addSpace(content, 14);
 
-        Button addReward = button("Add custom reward", FOREST, Color.WHITE);
+        Button addReward = button("Add custom reward", primaryColor(), readableTextColor(primaryColor()));
         addReward.setOnClickListener(v -> showRewardDialog(null));
         content.addView(addReward, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
         addSpace(content, 14);
@@ -654,19 +662,19 @@ public class MainActivity extends Activity {
 
     private void addCharacterPanel(LinearLayout content) {
         LinearLayout character = card();
-        character.setBackground(round(Color.rgb(239, 248, 241), 8, FOREST, 2));
+        character.setBackground(round(primarySoft(), 8, primaryColor(), 2));
         LinearLayout top = horizontal();
         top.setGravity(Gravity.CENTER_VERTICAL);
         character.addView(top);
         LinearLayout copy = vertical();
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        copy.addView(text(lifeTitle(), 14, FOREST, Typeface.BOLD));
+        copy.addView(text(lifeTitle(), 14, primaryTextColor(), Typeface.BOLD));
         copy.addView(text("Level " + getLevel() + " Life Builder", 25, INK, Typeface.BOLD));
         copy.addView(text(bestAttributeLine(), 14, MUTED, Typeface.NORMAL));
-        top.addView(pill(state.gems + " gems", LILAC, Color.WHITE));
+        top.addView(pill(state.gems + " gems", LILAC, readableTextColor(LILAC)));
 
         addSpace(character, 12);
-        character.addView(progressBar(xpIntoLevel(), xpPerLevel(), FOREST), new LinearLayout.LayoutParams(
+        character.addView(progressBar(xpIntoLevel(), xpPerLevel(), primaryColor()), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(10)
         ));
@@ -683,7 +691,7 @@ public class MainActivity extends Activity {
 
     private void addCompanionPanel(LinearLayout content) {
         LinearLayout companion = card();
-        companion.setBackground(round(Color.rgb(255, 252, 238), 8, GOLD, 2));
+        companion.setBackground(round(accentSoft(), 8, accentColor(), 2));
         LinearLayout top = horizontal();
         top.setGravity(Gravity.CENTER_VERTICAL);
         companion.addView(top);
@@ -696,7 +704,7 @@ public class MainActivity extends Activity {
         LinearLayout copy = vertical();
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         copy.addView(text(state.monsterName + " the " + monsterStage(), 23, INK, Typeface.BOLD));
-        copy.addView(text("Level " + monsterLevel() + " companion", 14, FOREST, Typeface.BOLD));
+        copy.addView(text("Level " + monsterLevel() + " companion", 14, primaryTextColor(), Typeface.BOLD));
         copy.addView(text("It grows when you keep promises, focus, check in with feelings, and care for it.", 14, MUTED, Typeface.NORMAL));
 
         addSpace(companion, 12);
@@ -720,17 +728,17 @@ public class MainActivity extends Activity {
         addSpace(companion, 12);
         LinearLayout actions = horizontal();
         companion.addView(actions);
-        Button feed = button(state.coins >= 15 ? "Feed" : "Need coins", state.coins >= 15 ? FOREST : Color.rgb(224, 229, 224), state.coins >= 15 ? Color.WHITE : MUTED);
+        Button feed = button(state.coins >= 15 ? "Feed" : "Need coins", state.coins >= 15 ? primaryColor() : Color.rgb(224, 229, 224), state.coins >= 15 ? readableTextColor(primaryColor()) : MUTED);
         feed.setEnabled(state.coins >= 15);
         feed.setOnClickListener(v -> careForMonster(0));
         actions.addView(feed, new LinearLayout.LayoutParams(0, dp(48), 1f));
         addGap(actions, 8);
-        Button train = button(state.gems >= 1 ? "Train" : "Need gem", state.gems >= 1 ? LILAC : Color.rgb(224, 229, 224), state.gems >= 1 ? Color.WHITE : MUTED);
+        Button train = button(state.gems >= 1 ? "Train" : "Need gem", state.gems >= 1 ? LILAC : Color.rgb(224, 229, 224), state.gems >= 1 ? readableTextColor(LILAC) : MUTED);
         train.setEnabled(state.gems >= 1);
         train.setOnClickListener(v -> careForMonster(1));
         actions.addView(train, new LinearLayout.LayoutParams(0, dp(48), 1f));
         addGap(actions, 8);
-        Button bond = button(today().equals(state.monsterLastCareDate) ? "Bonded" : "Bond", today().equals(state.monsterLastCareDate) ? Color.rgb(224, 229, 224) : SKY, today().equals(state.monsterLastCareDate) ? MUTED : Color.WHITE);
+        Button bond = button(today().equals(state.monsterLastCareDate) ? "Bonded" : "Bond", today().equals(state.monsterLastCareDate) ? Color.rgb(224, 229, 224) : SKY, today().equals(state.monsterLastCareDate) ? MUTED : readableTextColor(SKY));
         bond.setEnabled(!today().equals(state.monsterLastCareDate));
         bond.setOnClickListener(v -> careForMonster(2));
         actions.addView(bond, new LinearLayout.LayoutParams(0, dp(48), 1f));
@@ -755,7 +763,7 @@ public class MainActivity extends Activity {
         boolean claimed = isQuestClaimed(quest.id);
         LinearLayout card = card();
         card.setPadding(dp(16), dp(14), dp(16), dp(14));
-        card.setBackground(round(claimed ? Color.rgb(239, 248, 241) : Color.WHITE, 8, ready ? FOREST : LINE, ready ? 2 : 1));
+        card.setBackground(round(claimed ? primarySoft() : Color.WHITE, 8, ready ? primaryColor() : LINE, ready ? 2 : 1));
 
         LinearLayout top = horizontal();
         top.setGravity(Gravity.CENTER_VERTICAL);
@@ -764,17 +772,17 @@ public class MainActivity extends Activity {
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         copy.addView(text(quest.title, 18, INK, Typeface.BOLD));
         copy.addView(text(quest.description, 14, MUTED, Typeface.NORMAL));
-        top.addView(pill(claimed ? "Claimed" : ready ? "Ready" : quest.progress + "/" + quest.goal, ready || claimed ? FOREST : Color.rgb(224, 229, 224), ready || claimed ? Color.WHITE : MUTED));
+        top.addView(pill(claimed ? "Claimed" : ready ? "Ready" : quest.progress + "/" + quest.goal, ready || claimed ? primaryColor() : Color.rgb(224, 229, 224), ready || claimed ? readableTextColor(primaryColor()) : MUTED));
 
         addSpace(card, 10);
-        card.addView(progressBar(Math.min(quest.progress, quest.goal), quest.goal, ready ? FOREST : GOLD), new LinearLayout.LayoutParams(
+        card.addView(progressBar(Math.min(quest.progress, quest.goal), quest.goal, ready ? primaryColor() : accentColor()), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(8)
         ));
         addSpace(card, 10);
         card.addView(text("Reward: +" + quest.xp + " XP, +" + quest.coins + " coins" + (quest.gems > 0 ? ", +" + quest.gems + " gem" : "") + (quest.loot ? ", loot drop" : ""), 13, MUTED, Typeface.BOLD));
         addSpace(card, 10);
-        Button claim = button(claimed ? "Claimed" : ready ? "Claim quest" : "Keep going", ready && !claimed ? FOREST : Color.rgb(224, 229, 224), ready && !claimed ? Color.WHITE : MUTED);
+        Button claim = button(claimed ? "Claimed" : ready ? "Claim quest" : "Keep going", ready && !claimed ? primaryColor() : Color.rgb(224, 229, 224), ready && !claimed ? readableTextColor(primaryColor()) : MUTED);
         claim.setEnabled(ready && !claimed);
         claim.setOnClickListener(v -> claimQuest(quest));
         card.addView(claim, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
@@ -794,7 +802,7 @@ public class MainActivity extends Activity {
         row.addView(smallStat(state.chestsOpened + "", "chests"));
         row.addView(smallStat(state.inventory.size() + "", "items"));
         addSpace(treasure, 12);
-        Button open = button(state.gems >= 3 ? "Open chest" : "Need " + (3 - state.gems) + " gems", state.gems >= 3 ? LILAC : Color.rgb(224, 229, 224), state.gems >= 3 ? Color.WHITE : MUTED);
+        Button open = button(state.gems >= 3 ? "Open chest" : "Need " + (3 - state.gems) + " gems", state.gems >= 3 ? LILAC : Color.rgb(224, 229, 224), state.gems >= 3 ? readableTextColor(LILAC) : MUTED);
         open.setEnabled(state.gems >= 3);
         open.setOnClickListener(v -> openAdventureChest());
         treasure.addView(open, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
@@ -803,7 +811,7 @@ public class MainActivity extends Activity {
 
     private void addCraftingPanel(LinearLayout content) {
         addSectionHeader(content, "Crafting bench", "Turn progress currencies into tiny game items that reinforce real life.");
-        addCraftRecipe(content, 0, "Focus potion", "2 gems + 40 coins -> +35 XP and a focus inventory item.", 2, 40, FOREST);
+        addCraftRecipe(content, 0, "Focus potion", "2 gems + 40 coins -> +35 XP and a focus inventory item.", 2, 40, primaryColor());
         addSpace(content, 10);
         addCraftRecipe(content, 1, "Rest pass", "1 gem + 25 coins -> creates a guilt-free recovery reward.", 1, 25, SKY);
         addSpace(content, 10);
@@ -814,7 +822,7 @@ public class MainActivity extends Activity {
         LinearLayout card = card();
         card.setPadding(dp(16), dp(14), dp(16), dp(14));
         boolean craftable = state.gems >= gemCost && state.coins >= coinCost;
-        card.setBackground(round(craftable ? Color.rgb(239, 248, 241) : Color.WHITE, 8, craftable ? color : LINE, craftable ? 2 : 1));
+        card.setBackground(round(craftable ? primarySoft() : Color.WHITE, 8, craftable ? color : LINE, craftable ? 2 : 1));
 
         LinearLayout top = horizontal();
         top.setGravity(Gravity.CENTER_VERTICAL);
@@ -823,10 +831,10 @@ public class MainActivity extends Activity {
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         copy.addView(text(title, 18, INK, Typeface.BOLD));
         copy.addView(text(description, 14, MUTED, Typeface.NORMAL));
-        top.addView(pill(gemCost + " gems", color, Color.WHITE));
+        top.addView(pill(gemCost + " gems", color, readableTextColor(color)));
 
         addSpace(card, 10);
-        Button craft = button(craftable ? "Craft" : "Need " + Math.max(0, gemCost - state.gems) + " gems, " + Math.max(0, coinCost - state.coins) + " coins", craftable ? color : Color.rgb(224, 229, 224), craftable ? Color.WHITE : MUTED);
+        Button craft = button(craftable ? "Craft" : "Need " + Math.max(0, gemCost - state.gems) + " gems, " + Math.max(0, coinCost - state.coins) + " coins", craftable ? color : Color.rgb(224, 229, 224), craftable ? readableTextColor(color) : MUTED);
         craft.setEnabled(craftable);
         craft.setOnClickListener(v -> craftRecipe(recipe));
         card.addView(craft, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
@@ -837,15 +845,15 @@ public class MainActivity extends Activity {
         addSectionHeader(content, "Data vault", "Save a portable backup file or restore one later. No account required.");
         LinearLayout vault = card();
         vault.addView(text("Your life-game data stays yours", 20, INK, Typeface.BOLD));
-        vault.addView(text("Backups include habits, moods, rewards, quests, timer state, coins, gems, loot, and achievements progress.", 15, MUTED, Typeface.NORMAL));
+        vault.addView(text("Backups include habits, moods, rewards, quests, timer state, colors, coins, gems, loot, and achievements progress.", 15, MUTED, Typeface.NORMAL));
         addSpace(vault, 12);
         LinearLayout fileActions = horizontal();
         vault.addView(fileActions);
-        Button saveFile = button("Save file", FOREST, Color.WHITE);
+        Button saveFile = button("Save file", primaryColor(), readableTextColor(primaryColor()));
         saveFile.setOnClickListener(v -> saveBackupFile());
         fileActions.addView(saveFile, new LinearLayout.LayoutParams(0, dp(48), 1f));
         addGap(fileActions, 10);
-        Button importFile = button("Import file", GOLD, INK);
+        Button importFile = button("Import file", accentColor(), readableTextColor(accentColor()));
         importFile.setOnClickListener(v -> openBackupFile());
         fileActions.addView(importFile, new LinearLayout.LayoutParams(0, dp(48), 1f));
         addSpace(vault, 10);
@@ -861,6 +869,167 @@ public class MainActivity extends Activity {
         content.addView(vault);
     }
 
+    private void addAppearancePanel(LinearLayout content) {
+        addSectionHeader(content, "Appearance", "Pick a palette that feels personal while keeping the app readable.");
+        LinearLayout panel = card();
+        panel.addView(text("Color theme", 21, INK, Typeface.BOLD));
+        panel.addView(detailLine("Current", themeDisplayName()));
+        addSpace(panel, 12);
+
+        LinearLayout swatches = horizontal();
+        swatches.setGravity(Gravity.CENTER_VERTICAL);
+        panel.addView(swatches);
+        swatches.addView(colorSwatch("Primary", primaryColor()), new LinearLayout.LayoutParams(0, dp(48), 1f));
+        addGap(swatches, 8);
+        swatches.addView(colorSwatch("Accent", accentColor()), new LinearLayout.LayoutParams(0, dp(48), 1f));
+        addGap(swatches, 8);
+        swatches.addView(colorSwatch("Base", backgroundColor()), new LinearLayout.LayoutParams(0, dp(48), 1f));
+
+        addSpace(panel, 14);
+        panel.addView(text("Presets", 15, MUTED, Typeface.BOLD));
+        addSpace(panel, 8);
+        addThemePresetButtons(panel);
+
+        addSpace(panel, 12);
+        Button custom = button("Custom colors", primaryColor(), readableTextColor(primaryColor()));
+        custom.setOnClickListener(v -> showThemeDialog());
+        panel.addView(custom, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        content.addView(panel);
+    }
+
+    private TextView colorSwatch(String label, int color) {
+        TextView swatch = pill(label, color, readableTextColor(color));
+        swatch.setContentDescription(label + " color " + formatHexColor(color));
+        return swatch;
+    }
+
+    private void addThemePresetButtons(LinearLayout panel) {
+        LinearLayout row = null;
+        for (int i = 0; i < THEME_PRESETS.length; i++) {
+            if (i % 2 == 0) {
+                if (i > 0) {
+                    addSpace(panel, 8);
+                }
+                row = horizontal();
+                panel.addView(row);
+            } else if (row != null) {
+                addGap(row, 8);
+            }
+            ThemePreset preset = THEME_PRESETS[i];
+            Button presetButton = button(preset.name, preset.primary, readableTextColor(preset.primary));
+            presetButton.setOnClickListener(v -> applyThemePreset(preset));
+            if (row != null) {
+                row.addView(presetButton, new LinearLayout.LayoutParams(0, dp(48), 1f));
+            }
+        }
+    }
+
+    private void showThemeDialog() {
+        LinearLayout form = vertical();
+        form.setPadding(dp(20), dp(12), dp(20), dp(4));
+
+        Spinner palette = spinner(THEME_CHOICES);
+        EditText primary = input("Primary color #RRGGBB", formatHexColor(primaryColor()));
+        EditText accent = input("Accent color #RRGGBB", formatHexColor(accentColor()));
+        EditText background = input("Light background #RRGGBB", formatHexColor(backgroundColor()));
+        primary.setSingleLine(true);
+        accent.setSingleLine(true);
+        background.setSingleLine(true);
+        primary.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        accent.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        background.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+
+        form.addView(label("Palette"));
+        form.addView(palette);
+        form.addView(label("Primary"));
+        form.addView(primary);
+        form.addView(label("Accent"));
+        form.addView(accent);
+        form.addView(label("Background"));
+        form.addView(background);
+        palette.setSelection(themeChoiceIndex());
+        palette.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position >= 0 && position < THEME_PRESETS.length) {
+                    ThemePreset preset = THEME_PRESETS[position];
+                    primary.setText(formatHexColor(preset.primary));
+                    accent.setText(formatHexColor(preset.accent));
+                    background.setText(formatHexColor(preset.background));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Customize colors")
+                .setView(form)
+                .setPositiveButton("Save", null)
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Reset", null)
+                .create();
+        dialog.setOnShowListener(d -> {
+            Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positive.setTextColor(primaryTextColor());
+            positive.setOnClickListener(v -> {
+                Integer primaryValue = parseThemeColor(primary.getText().toString());
+                Integer accentValue = parseThemeColor(accent.getText().toString());
+                Integer backgroundValue = parseThemeColor(background.getText().toString());
+                if (primaryValue == null) {
+                    primary.setError("Use #RRGGBB");
+                    return;
+                }
+                if (accentValue == null) {
+                    accent.setError("Use #RRGGBB");
+                    return;
+                }
+                if (backgroundValue == null) {
+                    background.setError("Use #RRGGBB");
+                    return;
+                }
+                if (relativeLuminance(backgroundValue) < 0.72d) {
+                    background.setError("Use a light background for readability");
+                    return;
+                }
+                state.themePrimary = primaryValue;
+                state.themeAccent = accentValue;
+                state.themeBackground = backgroundValue;
+                int choice = palette.getSelectedItemPosition();
+                state.themeName = matchingPresetName(primaryValue, accentValue, backgroundValue, choice);
+                saveState();
+                dialog.dismiss();
+                Toast.makeText(this, "Colors updated", Toast.LENGTH_LONG).show();
+                render();
+            });
+            Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (negative != null) {
+                negative.setTextColor(MUTED);
+            }
+            Button neutral = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+            if (neutral != null) {
+                neutral.setTextColor(CORAL);
+                neutral.setOnClickListener(v -> {
+                    applyThemePreset(THEME_PRESETS[0]);
+                    dialog.dismiss();
+                });
+            }
+        });
+        dialog.show();
+    }
+
+    private void applyThemePreset(ThemePreset preset) {
+        state.themeName = preset.name;
+        state.themePrimary = preset.primary;
+        state.themeAccent = preset.accent;
+        state.themeBackground = preset.background;
+        saveState();
+        Toast.makeText(this, preset.name + " colors applied", Toast.LENGTH_LONG).show();
+        render();
+    }
+
     private void renderProgress(LinearLayout content) {
         addSectionHeader(content, "Progress", "Skills rise from repeated votes, not perfect days.");
 
@@ -868,7 +1037,7 @@ public class MainActivity extends Activity {
         level.addView(text("Level " + getLevel(), 30, INK, Typeface.BOLD));
         level.addView(text(xpIntoLevel() + " / " + xpPerLevel() + " XP to next level", 15, MUTED, Typeface.NORMAL));
         addSpace(level, 10);
-        level.addView(progressBar(xpIntoLevel(), xpPerLevel(), FOREST), new LinearLayout.LayoutParams(
+        level.addView(progressBar(xpIntoLevel(), xpPerLevel(), primaryColor()), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(10)
         ));
@@ -878,6 +1047,9 @@ public class MainActivity extends Activity {
         level.addView(text(state.tomatoFocusSessions + " focus tomatoes completed", 15, MUTED, Typeface.NORMAL));
         level.addView(text(state.moodEntries.size() + " emotion check-ins", 15, MUTED, Typeface.NORMAL));
         content.addView(level);
+        addSpace(content, 14);
+
+        addAppearancePanel(content);
         addSpace(content, 14);
 
         addActivityReports(content);
@@ -913,7 +1085,7 @@ public class MainActivity extends Activity {
     private View habitCard(Habit habit, boolean todayMode) {
         LinearLayout card = card();
         if (isCompletedToday(habit)) {
-            card.setBackground(round(Color.rgb(238, 247, 241), 8, Color.rgb(186, 220, 196), 1));
+            card.setBackground(round(primarySoft(), 8, tint(primaryColor(), 0.58f), 1));
         }
 
         LinearLayout top = horizontal();
@@ -925,7 +1097,7 @@ public class MainActivity extends Activity {
         main.addView(text(habit.icon + " " + habit.name, 21, INK, Typeface.BOLD));
         main.addView(text(habit.identity, 14, MUTED, Typeface.NORMAL));
 
-        TextView attribute = pill(habit.attribute, attributeColor(habit.attribute), Color.WHITE);
+        TextView attribute = pill(habit.attribute, attributeColor(habit.attribute), readableTextColor(attributeColor(habit.attribute)));
         top.addView(attribute);
 
         addSpace(card, 12);
@@ -962,23 +1134,24 @@ public class MainActivity extends Activity {
                 minus.setOnClickListener(v -> updateQuantity(habit, -1));
                 actions.addView(minus, new LinearLayout.LayoutParams(0, dp(48), 1f));
                 addGap(actions, 8);
-                Button plus = button("+1", trackingProgressColor(habit), Color.WHITE);
+                Button plus = button("+1", trackingProgressColor(habit), readableTextColor(trackingProgressColor(habit)));
                 plus.setOnClickListener(v -> updateQuantity(habit, 1));
                 actions.addView(plus, new LinearLayout.LayoutParams(0, dp(48), 1f));
                 addGap(actions, 8);
                 addTrackingClaimOrEdit(actions, habit);
             } else if ("Time".equals(habit.trackingType)) {
-                Button timer = button(habit.trackerRunning ? "Stop" : "Start", habit.trackerRunning ? CORAL : FOREST, Color.WHITE);
+                int timerColor = habit.trackerRunning ? CORAL : primaryColor();
+                Button timer = button(habit.trackerRunning ? "Stop" : "Start", timerColor, readableTextColor(timerColor));
                 timer.setOnClickListener(v -> toggleActivityTimer(habit));
                 actions.addView(timer, new LinearLayout.LayoutParams(0, dp(48), 1f));
                 addGap(actions, 8);
-                Button addTime = button("+5m", SKY, Color.WHITE);
+                Button addTime = button("+5m", SKY, readableTextColor(SKY));
                 addTime.setOnClickListener(v -> addTrackedTime(habit, 5 * 60));
                 actions.addView(addTime, new LinearLayout.LayoutParams(0, dp(48), 1f));
                 addGap(actions, 8);
                 addTrackingClaimOrEdit(actions, habit);
             } else {
-                Button complete = button(isCompletedToday(habit) ? "Done today" : "Complete", isCompletedToday(habit) ? Color.rgb(207, 217, 210) : FOREST, isCompletedToday(habit) ? MUTED : Color.WHITE);
+                Button complete = button(isCompletedToday(habit) ? "Done today" : "Complete", isCompletedToday(habit) ? Color.rgb(207, 217, 210) : primaryColor(), isCompletedToday(habit) ? MUTED : readableTextColor(primaryColor()));
                 complete.setEnabled(!isCompletedToday(habit));
                 complete.setOnClickListener(v -> completeHabit(habit));
                 actions.addView(complete, new LinearLayout.LayoutParams(0, dp(48), 1f));
@@ -988,11 +1161,11 @@ public class MainActivity extends Activity {
                 actions.addView(edit, new LinearLayout.LayoutParams(0, dp(48), 1f));
             }
         } else {
-            Button edit = button("Edit habit", FOREST, Color.WHITE);
+            Button edit = button("Edit habit", primaryColor(), readableTextColor(primaryColor()));
             edit.setOnClickListener(v -> showHabitDialog(habit));
             actions.addView(edit, new LinearLayout.LayoutParams(0, dp(48), 1f));
             addGap(actions, 10);
-            Button start = button("Start small", GOLD, INK);
+            Button start = button("Start small", accentColor(), readableTextColor(accentColor()));
             start.setOnClickListener(v -> Toast.makeText(this, habit.tinyAction, Toast.LENGTH_LONG).show());
             actions.addView(start, new LinearLayout.LayoutParams(0, dp(48), 1f));
         }
@@ -1003,7 +1176,7 @@ public class MainActivity extends Activity {
         Button action;
         if ("Limit".equals(habit.goalMode)) {
             boolean safe = trackingProgress(habit) <= Math.max(1, habit.targetValue);
-            action = button(isCompletedToday(habit) ? "Safe" : safe ? "Safe day" : "Limit hit", safe && !isCompletedToday(habit) ? FOREST : Color.rgb(224, 229, 224), safe && !isCompletedToday(habit) ? Color.WHITE : MUTED);
+            action = button(isCompletedToday(habit) ? "Safe" : safe ? "Safe day" : "Limit hit", safe && !isCompletedToday(habit) ? primaryColor() : Color.rgb(224, 229, 224), safe && !isCompletedToday(habit) ? readableTextColor(primaryColor()) : MUTED);
             action.setEnabled(safe && !isCompletedToday(habit));
             action.setOnClickListener(v -> completeHabit(habit));
         } else {
@@ -1022,12 +1195,12 @@ public class MainActivity extends Activity {
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         copy.addView(text(reward.title, 20, INK, Typeface.BOLD));
         copy.addView(text(reward.claimedCount + " claimed", 14, MUTED, Typeface.NORMAL));
-        top.addView(pill(reward.cost + " coins", GOLD, INK));
+        top.addView(pill(reward.cost + " coins", accentColor(), readableTextColor(accentColor())));
 
         addSpace(card, 12);
         LinearLayout actions = horizontal();
         card.addView(actions);
-        Button claim = button(state.coins >= reward.cost ? "Claim reward" : "Need " + (reward.cost - state.coins), state.coins >= reward.cost ? FOREST : Color.rgb(207, 217, 210), state.coins >= reward.cost ? Color.WHITE : MUTED);
+        Button claim = button(state.coins >= reward.cost ? "Claim reward" : "Need " + (reward.cost - state.coins), state.coins >= reward.cost ? primaryColor() : Color.rgb(207, 217, 210), state.coins >= reward.cost ? readableTextColor(primaryColor()) : MUTED);
         claim.setEnabled(state.coins >= reward.cost);
         claim.setOnClickListener(v -> claimReward(reward));
         actions.addView(claim, new LinearLayout.LayoutParams(0, dp(48), 1f));
@@ -1041,7 +1214,7 @@ public class MainActivity extends Activity {
     private View achievementRow(Achievement achievement) {
         LinearLayout row = card();
         row.setPadding(dp(16), dp(14), dp(16), dp(14));
-        row.setBackground(round(achievement.unlocked ? Color.rgb(239, 248, 241) : Color.WHITE, 8, achievement.unlocked ? Color.rgb(176, 215, 187) : LINE, 1));
+        row.setBackground(round(achievement.unlocked ? primarySoft() : Color.WHITE, 8, achievement.unlocked ? tint(primaryColor(), 0.58f) : LINE, 1));
         LinearLayout top = horizontal();
         top.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(top);
@@ -1049,7 +1222,7 @@ public class MainActivity extends Activity {
         top.addView(copy, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         copy.addView(text(achievement.title, 18, INK, Typeface.BOLD));
         copy.addView(text(achievement.description, 14, MUTED, Typeface.NORMAL));
-        top.addView(pill(achievement.unlocked ? "Unlocked" : "Locked", achievement.unlocked ? FOREST : Color.rgb(224, 229, 224), achievement.unlocked ? Color.WHITE : MUTED));
+        top.addView(pill(achievement.unlocked ? "Unlocked" : "Locked", achievement.unlocked ? primaryColor() : Color.rgb(224, 229, 224), achievement.unlocked ? readableTextColor(primaryColor()) : MUTED));
         return row;
     }
 
@@ -1067,7 +1240,7 @@ public class MainActivity extends Activity {
         stats.addView(smallStat(limitExceededCount() + "", "limits hit"));
         addSpace(report, 12);
         report.addView(detailLine("Success", successPercent() + "% of tracked activities on target"));
-        report.addView(progressBar(successPercent(), 100, successPercent() >= 70 ? FOREST : GOLD), new LinearLayout.LayoutParams(
+        report.addView(progressBar(successPercent(), 100, successPercent() >= 70 ? primaryColor() : accentColor()), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(8)
         ));
@@ -1163,7 +1336,7 @@ public class MainActivity extends Activity {
 
         dialog.setOnShowListener(d -> {
             Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positive.setTextColor(FOREST);
+            positive.setTextColor(primaryTextColor());
             positive.setOnClickListener(v -> {
                 String habitName = name.getText().toString().trim();
                 if (habitName.isEmpty()) {
@@ -1235,7 +1408,7 @@ public class MainActivity extends Activity {
             }
             Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
             if (negative != null) {
-                negative.setTextColor(FOREST);
+                negative.setTextColor(primaryTextColor());
             }
         });
         dialog.show();
@@ -1262,7 +1435,7 @@ public class MainActivity extends Activity {
                 .create();
         dialog.setOnShowListener(d -> {
             Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positive.setTextColor(FOREST);
+            positive.setTextColor(primaryTextColor());
             positive.setOnClickListener(v -> {
                 String rewardTitle = title.getText().toString().trim();
                 if (rewardTitle.isEmpty()) {
@@ -1321,7 +1494,7 @@ public class MainActivity extends Activity {
             }
             Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
             if (negative != null) {
-                negative.setTextColor(FOREST);
+                negative.setTextColor(primaryTextColor());
             }
         });
         dialog.show();
@@ -1360,7 +1533,7 @@ public class MainActivity extends Activity {
                 .create();
         dialog.setOnShowListener(d -> {
             Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positive.setTextColor(FOREST);
+            positive.setTextColor(primaryTextColor());
             positive.setOnClickListener(v -> {
                 MoodEntry target = editing ? existing : new MoodEntry();
                 if (!editing) {
@@ -1616,12 +1789,12 @@ public class MainActivity extends Activity {
             return Color.rgb(213, 139, 63);
         }
         if (mood == 3) {
-            return GOLD;
+            return accentColor();
         }
         if (mood == 4) {
             return SKY;
         }
-        return FOREST;
+        return primaryColor();
     }
 
     private String moodInsight(MoodEntry entry) {
@@ -1770,7 +1943,7 @@ public class MainActivity extends Activity {
                 .create();
         dialog.setOnShowListener(d -> {
             Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positive.setTextColor(FOREST);
+            positive.setTextColor(primaryTextColor());
             positive.setOnClickListener(v -> {
                 String value = name.getText().toString().trim();
                 if (value.isEmpty()) {
@@ -1974,7 +2147,7 @@ public class MainActivity extends Activity {
                 .create();
         dialog.setOnShowListener(d -> {
             Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positive.setTextColor(FOREST);
+            positive.setTextColor(primaryTextColor());
             positive.setOnClickListener(v -> {
                 try {
                     restoreBackupString(backup.getText().toString());
@@ -2159,7 +2332,7 @@ public class MainActivity extends Activity {
 
     private int timerModeColor() {
         if (state.timerMode == 0) {
-            return FOREST;
+            return primaryColor();
         }
         if (state.timerMode == 1) {
             return SKY;
@@ -2254,7 +2427,7 @@ public class MainActivity extends Activity {
         if ("Limit".equals(habit.goalMode)) {
             return progress > target ? CORAL : SKY;
         }
-        return progress >= target ? FOREST : GOLD;
+        return progress >= target ? primaryColor() : accentColor();
     }
 
     private List<Habit> activeHabits() {
@@ -2506,9 +2679,9 @@ public class MainActivity extends Activity {
             return SKY;
         }
         if (action == 6 || action == 7) {
-            return GOLD;
+            return accentColor();
         }
-        return FOREST;
+        return primaryColor();
     }
 
     private int coachColor(int action) {
@@ -2772,6 +2945,156 @@ public class MainActivity extends Activity {
         return reward;
     }
 
+    private void applySystemBars() {
+        Window window = getWindow();
+        int background = backgroundColor();
+        window.setStatusBarColor(background);
+        window.setNavigationBarColor(background);
+        int flags = 0;
+        if (relativeLuminance(background) > 0.55d) {
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= 26) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            }
+        }
+        window.getDecorView().setSystemUiVisibility(flags);
+    }
+
+    private int primaryColor() {
+        return safeThemeColor(state == null ? FOREST : state.themePrimary, FOREST);
+    }
+
+    private int accentColor() {
+        return safeThemeColor(state == null ? GOLD : state.themeAccent, GOLD);
+    }
+
+    private int backgroundColor() {
+        int background = safeThemeColor(state == null ? BG : state.themeBackground, BG);
+        return relativeLuminance(background) < 0.72d ? BG : background;
+    }
+
+    private int primarySoft() {
+        return tint(primaryColor(), 0.86f);
+    }
+
+    private int accentSoft() {
+        return tint(accentColor(), 0.82f);
+    }
+
+    private int safeThemeColor(int color, int fallback) {
+        if (color == 0 || Color.alpha(color) < 255) {
+            return fallback;
+        }
+        return Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+    }
+
+    private int tint(int color, float amount) {
+        return mix(color, Color.WHITE, amount);
+    }
+
+    private int shade(int color, float amount) {
+        return mix(color, Color.BLACK, amount);
+    }
+
+    private int mix(int color, int target, float amount) {
+        float safeAmount = Math.max(0f, Math.min(1f, amount));
+        return Color.rgb(
+                Math.round(Color.red(color) + (Color.red(target) - Color.red(color)) * safeAmount),
+                Math.round(Color.green(color) + (Color.green(target) - Color.green(color)) * safeAmount),
+                Math.round(Color.blue(color) + (Color.blue(target) - Color.blue(color)) * safeAmount)
+        );
+    }
+
+    private int readableTextColor(int background) {
+        if (Color.alpha(background) < 32) {
+            return INK;
+        }
+        return relativeLuminance(background) > 0.54d ? INK : Color.WHITE;
+    }
+
+    private int primaryTextColor() {
+        if (contrastRatio(primaryColor(), Color.WHITE) >= 4.5d) {
+            return primaryColor();
+        }
+        int shaded = shade(primaryColor(), 0.42f);
+        return contrastRatio(shaded, Color.WHITE) >= 4.5d ? shaded : INK;
+    }
+
+    private int readableForeground(int requested, int background) {
+        if (Color.alpha(background) < 32 || contrastRatio(requested, background) >= 4.5d) {
+            return requested;
+        }
+        return readableTextColor(background);
+    }
+
+    private double contrastRatio(int first, int second) {
+        double lighter = Math.max(relativeLuminance(first), relativeLuminance(second));
+        double darker = Math.min(relativeLuminance(first), relativeLuminance(second));
+        return (lighter + 0.05d) / (darker + 0.05d);
+    }
+
+    private double relativeLuminance(int color) {
+        double red = linearChannel(Color.red(color) / 255d);
+        double green = linearChannel(Color.green(color) / 255d);
+        double blue = linearChannel(Color.blue(color) / 255d);
+        return 0.2126d * red + 0.7152d * green + 0.0722d * blue;
+    }
+
+    private double linearChannel(double channel) {
+        return channel <= 0.03928d ? channel / 12.92d : Math.pow((channel + 0.055d) / 1.055d, 2.4d);
+    }
+
+    private String themeDisplayName() {
+        return fallback(state.themeName, "Custom") + " " + formatHexColor(primaryColor()) + " / " + formatHexColor(accentColor());
+    }
+
+    private int themeChoiceIndex() {
+        String name = state == null ? "" : state.themeName;
+        for (int i = 0; i < THEME_PRESETS.length; i++) {
+            if (THEME_PRESETS[i].name.equals(name)
+                    && THEME_PRESETS[i].primary == primaryColor()
+                    && THEME_PRESETS[i].accent == accentColor()
+                    && THEME_PRESETS[i].background == backgroundColor()) {
+                return i;
+            }
+        }
+        return THEME_CHOICES.length - 1;
+    }
+
+    private String matchingPresetName(int primary, int accent, int background, int choice) {
+        if (choice >= 0 && choice < THEME_PRESETS.length) {
+            ThemePreset preset = THEME_PRESETS[choice];
+            if (preset.primary == primary && preset.accent == accent && preset.background == background) {
+                return preset.name;
+            }
+        }
+        for (ThemePreset preset : THEME_PRESETS) {
+            if (preset.primary == primary && preset.accent == accent && preset.background == background) {
+                return preset.name;
+            }
+        }
+        return "Custom";
+    }
+
+    private Integer parseThemeColor(String value) {
+        String normalized = value == null ? "" : value.trim();
+        if (!normalized.startsWith("#")) {
+            normalized = "#" + normalized;
+        }
+        if (!normalized.matches("#[0-9a-fA-F]{6}")) {
+            return null;
+        }
+        try {
+            return Color.parseColor(normalized);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private String formatHexColor(int color) {
+        return String.format(Locale.US, "#%02X%02X%02X", Color.red(color), Color.green(color), Color.blue(color));
+    }
+
     private TextView text(String value, int sp, int color, int style) {
         TextView textView = new TextView(this);
         textView.setText(value);
@@ -2790,7 +3113,7 @@ public class MainActivity extends Activity {
     }
 
     private TextView pill(String value, int background, int foreground) {
-        TextView pill = text(value, 13, foreground, Typeface.BOLD);
+        TextView pill = text(value, 13, readableForeground(foreground, background), Typeface.BOLD);
         pill.setGravity(Gravity.CENTER);
         pill.setPadding(dp(12), dp(7), dp(12), dp(7));
         pill.setMinHeight(dp(32));
@@ -2858,7 +3181,7 @@ public class MainActivity extends Activity {
         button.setText(label);
         button.setTextSize(14);
         button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        button.setTextColor(foreground);
+        button.setTextColor(readableForeground(foreground, background));
         button.setGravity(Gravity.CENTER);
         button.setMinHeight(dp(48));
         button.setMinimumHeight(dp(48));
@@ -2906,7 +3229,7 @@ public class MainActivity extends Activity {
         progressBar.setMax(Math.max(1, max));
         progressBar.setProgress(Math.min(progress, max));
         progressBar.setProgressTintList(ColorStateList.valueOf(color));
-        progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.rgb(220, 228, 220)));
+        progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(tint(primaryColor(), 0.88f)));
         progressBar.setContentDescription(Math.min(progress, max) + " of " + Math.max(1, max));
         return progressBar;
     }
@@ -2968,7 +3291,7 @@ public class MainActivity extends Activity {
         if ("Social".equals(attribute)) {
             return Color.rgb(213, 139, 63);
         }
-        return FOREST;
+        return primaryColor();
     }
 
     private int indexOf(String[] values, String value) {
@@ -3022,7 +3345,7 @@ public class MainActivity extends Activity {
             float width = getWidth();
             float height = getHeight();
             int level = monsterLevel();
-            int bodyColor = level >= 8 ? LILAC : level >= 5 ? FOREST : level >= 3 ? SKY : GOLD;
+            int bodyColor = level >= 8 ? LILAC : level >= 5 ? primaryColor() : level >= 3 ? SKY : accentColor();
 
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(Color.rgb(255, 248, 224));
@@ -3258,6 +3581,20 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static class ThemePreset {
+        final String name;
+        final int primary;
+        final int accent;
+        final int background;
+
+        ThemePreset(String name, int primary, int accent, int background) {
+            this.name = name;
+            this.primary = primary;
+            this.accent = accent;
+            this.background = background;
+        }
+    }
+
     private static class AppState {
         int totalXp = 0;
         int coins = 0;
@@ -3275,9 +3612,13 @@ public class MainActivity extends Activity {
         int tomatoSessionsToday = 0;
         int tomatoMinutesToday = 0;
         int rewardClaimsToday = 0;
+        int themePrimary = FOREST;
+        int themeAccent = GOLD;
+        int themeBackground = BG;
         String lastChestDate = "";
         String tomatoLastDate = "";
         String rewardLastDate = "";
+        String themeName = "Forest";
         String monsterName = "Milo";
         String monsterLastCareDate = "";
         List<Habit> habits = new ArrayList<>();
@@ -3306,6 +3647,10 @@ public class MainActivity extends Activity {
                 json.put("tomatoSessionsToday", tomatoSessionsToday);
                 json.put("tomatoMinutesToday", tomatoMinutesToday);
                 json.put("rewardClaimsToday", rewardClaimsToday);
+                json.put("themeName", themeName);
+                json.put("themePrimary", themePrimary);
+                json.put("themeAccent", themeAccent);
+                json.put("themeBackground", themeBackground);
                 json.put("lastChestDate", lastChestDate);
                 json.put("tomatoLastDate", tomatoLastDate);
                 json.put("rewardLastDate", rewardLastDate);
@@ -3364,6 +3709,10 @@ public class MainActivity extends Activity {
             state.tomatoSessionsToday = json.optInt("tomatoSessionsToday", 0);
             state.tomatoMinutesToday = json.optInt("tomatoMinutesToday", 0);
             state.rewardClaimsToday = json.optInt("rewardClaimsToday", 0);
+            state.themeName = json.optString("themeName", "Forest");
+            state.themePrimary = json.optInt("themePrimary", FOREST);
+            state.themeAccent = json.optInt("themeAccent", GOLD);
+            state.themeBackground = json.optInt("themeBackground", BG);
             state.lastChestDate = json.optString("lastChestDate", "");
             state.tomatoLastDate = json.optString("tomatoLastDate", "");
             state.rewardLastDate = json.optString("rewardLastDate", "");

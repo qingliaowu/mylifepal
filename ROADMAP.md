@@ -11,6 +11,7 @@ MyLifePal should support iOS after the Android MVP proves the core habit loop. T
 - Progress model: total XP, coins, gems, attribute XP, inventory, chests opened, quest claims, and last chest date.
 - Companion monster model: name, growth XP, bond, last care date, level, and evolution stage.
 - Emotion model: dated mood, energy, stress, and optional note entries.
+- Theme model: palette name plus primary, accent, and light background colors.
 - Daily completion rule: one completion per habit per calendar day.
 - Atomic habit flow: cue, craving/identity, tiny action, reward.
 - Reminder model: local daily habit notifications that skip completed habits and reschedule after restore, reboot, and app update.
@@ -32,6 +33,7 @@ MyLifePal should support iOS after the Android MVP proves the core habit loop. T
 - Companion monster growth with care actions and evolution stages.
 - Emotion tracker with mood, energy, stress, notes, and 7-day trends.
 - Progress screen with level, attributes, streaks, and achievements.
+- Appearance controls with readable presets and custom colors.
 - Tomato Timer for focus sessions and break rhythm.
 - Offline-first storage using the same JSON-shaped model as Android.
 - Data vault for portable file export, file restore, clipboard fallback, and future cloud sync.

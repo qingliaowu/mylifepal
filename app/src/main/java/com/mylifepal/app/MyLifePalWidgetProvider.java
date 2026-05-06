@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.widget.RemoteViews;
 
 import org.json.JSONArray;
@@ -40,6 +41,8 @@ public class MyLifePalWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_score, stats.completed + "/" + stats.habits + " habits");
         views.setTextViewText(R.id.widget_status, stats.coins + " coins - " + stats.monsterName + " Lv " + stats.monsterLevel);
         views.setTextViewText(R.id.widget_next, stats.nextHabit.isEmpty() ? "Open MyLifePal" : "Next: " + stats.nextHabit);
+        views.setInt(R.id.widget_shell, "setBackgroundColor", stats.themeBackground);
+        views.setTextColor(R.id.widget_score, stats.themePrimary);
 
         Intent open = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
@@ -62,6 +65,8 @@ public class MyLifePalWidgetProvider extends AppWidgetProvider {
         try {
             JSONObject state = new JSONObject(raw);
             stats.coins = state.optInt("coins", 0);
+            stats.themeBackground = safeBackground(state.optInt("themeBackground", stats.themeBackground));
+            stats.themePrimary = safeTextOnBackground(state.optInt("themePrimary", stats.themePrimary), stats.themeBackground);
             stats.monsterName = state.optString("monsterName", "Milo");
             stats.monsterLevel = (state.optInt("monsterXp", 0) / 90) + 1;
             JSONArray habits = state.optJSONArray("habits");
@@ -86,11 +91,38 @@ public class MyLifePalWidgetProvider extends AppWidgetProvider {
         return stats;
     }
 
+    private static int safeBackground(int color) {
+        return relativeLuminance(color) < 0.72d ? Color.rgb(245, 247, 241) : color;
+    }
+
+    private static int safeTextOnBackground(int textColor, int background) {
+        return contrastRatio(textColor, background) >= 4.5d ? textColor : Color.rgb(23, 32, 27);
+    }
+
+    private static double contrastRatio(int first, int second) {
+        double lighter = Math.max(relativeLuminance(first), relativeLuminance(second));
+        double darker = Math.min(relativeLuminance(first), relativeLuminance(second));
+        return (lighter + 0.05d) / (darker + 0.05d);
+    }
+
+    private static double relativeLuminance(int color) {
+        double red = linearChannel(Color.red(color) / 255d);
+        double green = linearChannel(Color.green(color) / 255d);
+        double blue = linearChannel(Color.blue(color) / 255d);
+        return 0.2126d * red + 0.7152d * green + 0.0722d * blue;
+    }
+
+    private static double linearChannel(double channel) {
+        return channel <= 0.03928d ? channel / 12.92d : Math.pow((channel + 0.055d) / 1.055d, 2.4d);
+    }
+
     private static class WidgetStats {
         int habits = 0;
         int completed = 0;
         int coins = 0;
         int monsterLevel = 1;
+        int themePrimary = Color.rgb(46, 125, 104);
+        int themeBackground = Color.rgb(245, 247, 241);
         String monsterName = "Milo";
         String nextHabit = "";
     }
