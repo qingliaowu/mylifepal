@@ -52,6 +52,28 @@ MyLifePal should support iOS after the Android MVP proves the core habit loop. T
 
 The iOS release should not add complexity just to match platform expectations. It should preserve the main promise: tiny habits should be easier to start than to avoid.
 
+## Chrome Extension
+
+The Chrome extension should keep the same promise in the browser toolbar: fast capture, low-friction completion, and local-first data ownership.
+
+### Current Extension MVP
+
+- Manifest V3 extension under `chrome-extension/`.
+- Toolbar popup with Today, Tomato Timer, Mood, Habits, and Rewards views.
+- `chrome.storage.local` offline state.
+- Daily habit reminders through `chrome.alarms` and `chrome.notifications`.
+- Background timer completion for Tomato Timer sessions.
+- Color presets, custom hex colors, JSON export/import, rewards, coins, XP, gems, and companion growth.
+- No host permissions and no web page reading.
+
+### Later Extension Enhancements
+
+- Optional side panel for a larger planning surface.
+- Optional new-tab dashboard.
+- Cross-device sync through a user-controlled cloud provider.
+- Shareable browser quick actions for adding a habit from selected text.
+- Chrome Web Store listing assets, screenshots, and privacy disclosure.
+
 ## Pixel Watch / Wear OS
 
 Pixel Watch support is part of the Android track through a dedicated Wear OS app. The watch app should stay deliberately small: one-tap completion, the next tiny action, Tomato Timer, streak feedback, XP, and coins.

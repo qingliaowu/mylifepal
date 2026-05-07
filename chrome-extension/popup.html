@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MyLifePal</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main id="app" class="app-shell">
+      <header class="hero">
+        <div>
+          <h1>MyLifePal</h1>
+          <p id="identityLine">Tiny habits. Real-life levels.</p>
+        </div>
+        <div class="level-pill" id="levelPill">Lv 1</div>
+      </header>
+
+      <section class="stats-strip" aria-label="Progress summary">
+        <div>
+          <strong id="xpStat">0 XP</strong>
+          <span>total</span>
+        </div>
+        <div>
+          <strong id="coinStat">0</strong>
+          <span>coins</span>
+        </div>
+        <div>
+          <strong id="doneStat">0/0</strong>
+          <span>today</span>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="MyLifePal sections">
+        <button type="button" class="tab-button is-active" data-view="today">Today</button>
+        <button type="button" class="tab-button" data-view="timer">Timer</button>
+        <button type="button" class="tab-button" data-view="mood">Mood</button>
+        <button type="button" class="tab-button" data-view="habits">Habits</button>
+        <button type="button" class="tab-button" data-view="rewards">Rewards</button>
+      </nav>
+
+      <section id="content" class="content" aria-live="polite"></section>
+    </main>
+
+    <template id="toastTemplate">
+      <div class="toast" role="status"></div>
+    </template>
+    <div id="toastHost" class="toast-host" aria-live="polite"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -8,6 +8,8 @@ Pixel Watch support is included through a separate Wear OS companion app. The wa
 
 Apple Watch support is included through a native SwiftUI watchOS companion scaffold. It uses the same small-screen loop, Tomato Timer, and quick emotion check-in as the Pixel Watch app and stores watch progress offline while future phone-watch sync is planned.
 
+Chrome extension support is included through a dependency-free Manifest V3 extension. It brings the small daily loop to the browser toolbar with habits, reminders, Tomato Timer, mood check-ins, rewards, themes, and local JSON backup.
+
 An iOS release is planned for a future version. The app keeps its habit, reward, and progress data model simple and JSON-shaped so the core loop can be carried to a native iOS app later without redesigning the product from scratch. See `ROADMAP.md`.
 
 ## Build
@@ -32,6 +34,20 @@ Build the Apple Watch simulator app with:
 The watchOS simulator app is written under `build/xcode/Build/Products/Debug-watchsimulator/MyLifePalWatch.app`.
 
 The Gradle project files are included as well, so Android Studio can import and run the app normally.
+
+Load the Chrome extension during development from:
+
+```text
+chrome-extension/
+```
+
+Open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select the `chrome-extension` folder.
+
+Create a distributable ZIP with:
+
+```sh
+./build-chrome-extension.sh
+```
 
 ## Life Game Rewards
 
@@ -80,6 +96,7 @@ Habit Studio now covers the core Timecap activity types:
 - Per-habit icon/emoji, target value, unit, attribute, reminder, cue, tiny action, identity, and reward.
 - Activity reports for completion habits, counters, timers, success percentage, tracked time, tracked quantity, limits hit, and streaks.
 - Android home screen widget with habit progress, next action, coins, and companion level.
+- Chrome extension popup with local habit progress, daily reminders, next action, timer, rewards, themes, and backup.
 
 ## Reminder System
 
@@ -128,6 +145,7 @@ The public LifeUp trial repository describes a highly customizable gamified to-d
 MyLifePal is designed to compete with the best parts of LifeUp, Timecap, Habitica, Finch, Streaks, and Fabulous while staying simpler at the surface:
 
 - Phone, Pixel Watch, and Apple Watch experiences from the start.
+- Chrome extension experience for the browser toolbar.
 - Timecap-style completion, quantity, and time tracking with goals, limits, periods, reports, reminders, widget, and backup.
 - Adaptive daily coach that turns many systems into one next action.
 - Atomic habit design built into each habit: cue, tiny action, identity, and reward.
