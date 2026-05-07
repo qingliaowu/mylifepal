@@ -52,6 +52,30 @@ MyLifePal should support iOS after the Android MVP proves the core habit loop. T
 
 The iOS release should not add complexity just to match platform expectations. It should preserve the main promise: tiny habits should be easier to start than to avoid.
 
+## Mac / macOS
+
+The Mac app should be the command center for deeper review and planning while preserving the low-friction daily loop.
+
+### Current Mac MVP
+
+- Native SwiftUI macOS app under `macos/`.
+- Sidebar workflow for Today, Tomato Timer, Mood, Habits, Rewards, Progress, and Appearance.
+- Offline JSON state in Application Support.
+- Atomic habit creation with cue, tiny action, identity, reward, attribute, and reminder time.
+- Local macOS notifications for habit reminders and timer completion.
+- Tomato Timer with focus, short break, and long break modes.
+- Mood, energy, stress, and notes.
+- XP, coins, gems, reward shop, inventory, achievements, and companion growth.
+- Theme presets, custom colors, portable JSON export/import, and Android backup-shape import.
+
+### Later Mac Enhancements
+
+- Menu bar quick-complete companion.
+- Calendar timeline for streaks, moods, focus, and rewards.
+- Cloud sync with explicit user-controlled accounts.
+- Rich charts for Timecap-style activity analytics.
+- Keyboard-first command palette and Shortcuts/App Intents.
+
 ## Chrome Extension
 
 The Chrome extension should keep the same promise in the browser toolbar: fast capture, low-friction completion, and local-first data ownership.

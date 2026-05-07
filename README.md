@@ -10,6 +10,8 @@ Apple Watch support is included through a native SwiftUI watchOS companion scaff
 
 Chrome extension support is included through a dependency-free Manifest V3 extension. It brings the small daily loop to the browser toolbar with habits, reminders, Tomato Timer, mood check-ins, rewards, themes, and local JSON backup.
 
+Mac support is included through a native SwiftUI macOS app. It uses a desktop sidebar layout for Today, Timer, Mood, Habits, Rewards, Progress, and Appearance while keeping the same offline-first JSON-shaped habit and reward model.
+
 An iOS release is planned for a future version. The app keeps its habit, reward, and progress data model simple and JSON-shaped so the core loop can be carried to a native iOS app later without redesigning the product from scratch. See `ROADMAP.md`.
 
 ## Build
@@ -32,6 +34,14 @@ Build the Apple Watch simulator app with:
 ```
 
 The watchOS simulator app is written under `build/xcode/Build/Products/Debug-watchsimulator/MyLifePalWatch.app`.
+
+Build the native Mac app with:
+
+```sh
+./build-macos-app.sh
+```
+
+The macOS app is written to `build/macos/Build/Products/Debug/MyLifePalMac.app`.
 
 The Gradle project files are included as well, so Android Studio can import and run the app normally.
 
@@ -145,6 +155,7 @@ The public LifeUp trial repository describes a highly customizable gamified to-d
 MyLifePal is designed to compete with the best parts of LifeUp, Timecap, Habitica, Finch, Streaks, and Fabulous while staying simpler at the surface:
 
 - Phone, Pixel Watch, and Apple Watch experiences from the start.
+- Native macOS desktop app with sidebar workflow, local notifications, backup/import, themes, and desktop-sized habit management.
 - Chrome extension experience for the browser toolbar.
 - Timecap-style completion, quantity, and time tracking with goals, limits, periods, reports, reminders, widget, and backup.
 - Adaptive daily coach that turns many systems into one next action.
