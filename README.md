@@ -1,6 +1,6 @@
 # MyLifePal
 
-MyLifePal is an offline-first Android habit RPG inspired by gamified productivity apps and atomic habit loops. It turns daily habits into tiny identity votes, Timecap-style activity tracking, an adaptive daily coach, daily reminders, emotion check-ins, companion monster growth, XP, coins, gems, reward quests, attributes, achievements, loot drops, chest openings, and Tomato Timer focus sessions.
+MyLifePal is an offline-first Android habit RPG inspired by gamified productivity apps and atomic habit loops. It turns daily habits into tiny identity votes, Timecap-style activity tracking, an adaptive daily coach, daily reminders, emotion check-ins, companion monster growth, XP, coins, gems, reward quests, attributes, achievements, loot drops, chest openings, local security passwords, and Tomato Timer focus sessions.
 
 Users can personalize the app with color presets or custom hex colors for the primary color, accent color, and light background. Theme choices apply to the main Android app and home-screen widget and are included in backups.
 
@@ -12,7 +12,11 @@ Chrome extension support is included through a dependency-free Manifest V3 exten
 
 Mac support is included through a native SwiftUI macOS app. It uses a desktop sidebar layout for Today, Timer, Mood, Habits, Rewards, Progress, and Appearance while keeping the same offline-first JSON-shaped habit and reward model.
 
+Windows support is included through a native WPF desktop app targeting .NET 8. It uses a desktop sidebar layout, local JSON storage, in-app reminder notifications, Tomato Timer, mood tracking, rewards, themes, local security password lock, and portable backup/import.
+
 An iOS release is planned for a future version. The app keeps its habit, reward, and progress data model simple and JSON-shaped so the core loop can be carried to a native iOS app later without redesigning the product from scratch. See `ROADMAP.md`.
+
+The Android codebase is being migrated toward Kotlin. Kotlin Gradle tooling is enabled for the phone and Wear modules, and the Wear OS activity has been moved to Kotlin. See `KOTLIN_MIGRATION.md`.
 
 ## Build
 
@@ -43,7 +47,17 @@ Build the native Mac app with:
 
 The macOS app is written to `build/macos/Build/Products/Debug/MyLifePalMac.app`.
 
+Build the native Windows app on Windows with the .NET 8 SDK:
+
+```powershell
+.\build-windows-app.ps1
+```
+
+The Windows app source is under `windows\MyLifePal.Windows\`.
+
 The Gradle project files are included as well, so Android Studio can import and run the app normally.
+
+For Play Store release steps, signing setup, store listing copy, privacy/Data Safety notes, testing tracks, and Wear OS publishing, see `GOOGLE_PLAY_DEPLOYMENT.md`.
 
 Load the Chrome extension during development from:
 
@@ -71,6 +85,7 @@ The Rewards tab now works like a light life RPG:
 - Real-life reward shop for custom rewards paid with earned coins.
 - Inventory history for claimed rewards, quest loot, and chest loot.
 - Data vault for portable JSON file backup, file restore, and clipboard fallback.
+- Local security password with unlock-on-launch, lock-now, change, disable, and salted hash storage.
 
 ## Daily Coach
 
@@ -107,6 +122,7 @@ Habit Studio now covers the core Timecap activity types:
 - Activity reports for completion habits, counters, timers, success percentage, tracked time, tracked quantity, limits hit, and streaks.
 - Android home screen widget with habit progress, next action, coins, and companion level.
 - Chrome extension popup with local habit progress, daily reminders, next action, timer, rewards, themes, and backup.
+- Android app security password stores only salted hashes and is included in portable backups.
 
 ## Reminder System
 
@@ -156,6 +172,7 @@ MyLifePal is designed to compete with the best parts of LifeUp, Timecap, Habitic
 
 - Phone, Pixel Watch, and Apple Watch experiences from the start.
 - Native macOS desktop app with sidebar workflow, local notifications, backup/import, themes, and desktop-sized habit management.
+- Native Windows WPF desktop app with sidebar workflow, local reminders while running, backup/import, themes, and desktop-sized habit management.
 - Chrome extension experience for the browser toolbar.
 - Timecap-style completion, quantity, and time tracking with goals, limits, periods, reports, reminders, widget, and backup.
 - Adaptive daily coach that turns many systems into one next action.

@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
+import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,6 +47,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -106,6 +109,7 @@ public class MainActivity extends Activity {
     private AppState state;
     private LinearLayout root;
     private int selectedTab = 0;
+    private boolean appUnlocked = true;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private final Runnable timerRunnable = new Runnable() {
         @Override
@@ -128,7 +132,13 @@ public class MainActivity extends Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(backgroundColor());
         setContentView(root);
-        render();
+        appUnlocked = !securityEnabled();
+        if (appUnlocked) {
+            render();
+        } else {
+            renderLockedScreen();
+            root.post(this::showUnlockDialog);
+        }
         timerHandler.post(timerRunnable);
     }
 
@@ -142,6 +152,9 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        if (securityEnabled() && !appUnlocked) {
             return;
         }
         Uri uri = data.getData();
@@ -165,6 +178,10 @@ public class MainActivity extends Activity {
     private void render() {
         applySystemBars();
         root.setBackgroundColor(backgroundColor());
+        if (securityEnabled() && !appUnlocked) {
+            renderLockedScreen();
+            return;
+        }
         root.removeAllViews();
         addHeader();
         addTabs();
@@ -197,6 +214,59 @@ public class MainActivity extends Activity {
         } else {
             renderProgress(content);
         }
+    }
+
+    private void renderLockedScreen() {
+        root.removeAllViews();
+        LinearLayout shell = vertical();
+        shell.setGravity(Gravity.CENTER);
+        shell.setPadding(dp(28), dp(28), dp(28), dp(28));
+        root.addView(shell, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        TextView title = text("MyLifePal is locked", 28, primaryColor(), Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        shell.addView(title);
+        TextView subtitle = text("Enter your security password to view habits, moods, rewards, backups, and progress.", 15, MUTED, Typeface.NORMAL);
+        subtitle.setGravity(Gravity.CENTER);
+        shell.addView(subtitle);
+        addSpace(shell, 18);
+        Button unlock = button("Unlock", primaryColor(), readableTextColor(primaryColor()));
+        unlock.setOnClickListener(v -> showUnlockDialog());
+        shell.addView(unlock, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
+    }
+
+    private void showUnlockDialog() {
+        EditText password = input("Security password", "");
+        password.setSingleLine(true);
+        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Unlock MyLifePal")
+                .setView(password)
+                .setPositiveButton("Unlock", null)
+                .setNegativeButton("Close", null)
+                .create();
+        dialog.setOnShowListener(d -> {
+            Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positive.setTextColor(primaryTextColor());
+            positive.setOnClickListener(v -> {
+                if (!verifySecurityPassword(password.getText().toString())) {
+                    password.setError("Password does not match");
+                    password.setText("");
+                    return;
+                }
+                appUnlocked = true;
+                dialog.dismiss();
+                render();
+            });
+            Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (negative != null) {
+                negative.setTextColor(MUTED);
+            }
+        });
+        dialog.show();
     }
 
     private void addHeader() {
@@ -623,6 +693,8 @@ public class MainActivity extends Activity {
         addCraftingPanel(content);
         addSpace(content, 14);
         addDataVaultPanel(content);
+        addSpace(content, 14);
+        addSecurityPanel(content);
         addSpace(content, 18);
 
         addSectionHeader(content, "Reward shop", "Spend coins on things that make good habits satisfying.");
@@ -845,7 +917,7 @@ public class MainActivity extends Activity {
         addSectionHeader(content, "Data vault", "Save a portable backup file or restore one later. No account required.");
         LinearLayout vault = card();
         vault.addView(text("Your life-game data stays yours", 20, INK, Typeface.BOLD));
-        vault.addView(text("Backups include habits, moods, rewards, quests, timer state, colors, coins, gems, loot, and achievements progress.", 15, MUTED, Typeface.NORMAL));
+        vault.addView(text("Backups include habits, moods, rewards, quests, timer state, colors, coins, gems, loot, security settings, and achievements progress.", 15, MUTED, Typeface.NORMAL));
         addSpace(vault, 12);
         LinearLayout fileActions = horizontal();
         vault.addView(fileActions);
@@ -867,6 +939,135 @@ public class MainActivity extends Activity {
         paste.setOnClickListener(v -> showRestoreDialog());
         clipboardActions.addView(paste, new LinearLayout.LayoutParams(0, dp(48), 1f));
         content.addView(vault);
+    }
+
+    private void addSecurityPanel(LinearLayout content) {
+        addSectionHeader(content, "Security", "Create a local password for this device.");
+        LinearLayout panel = card();
+        panel.setBackground(round(securityEnabled() ? primarySoft() : Color.WHITE, 8, securityEnabled() ? primaryColor() : LINE, securityEnabled() ? 2 : 1));
+        panel.addView(text("Security password", 21, INK, Typeface.BOLD));
+        panel.addView(text(securityEnabled() ? "Enabled. MyLifePal asks for this password on launch." : "Off. Protect your local habit data with a password.", 15, MUTED, Typeface.NORMAL));
+        addSpace(panel, 12);
+
+        Button set = button(securityEnabled() ? "Change password" : "Create password", primaryColor(), readableTextColor(primaryColor()));
+        set.setOnClickListener(v -> showSetPasswordDialog());
+        panel.addView(set, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+
+        if (securityEnabled()) {
+            addSpace(panel, 10);
+            LinearLayout row = horizontal();
+            panel.addView(row);
+            Button lock = button("Lock now", Color.rgb(233, 238, 234), INK);
+            lock.setOnClickListener(v -> {
+                appUnlocked = false;
+                renderLockedScreen();
+                showUnlockDialog();
+            });
+            row.addView(lock, new LinearLayout.LayoutParams(0, dp(48), 1f));
+            addGap(row, 10);
+            Button disable = button("Disable", Color.rgb(255, 235, 231), CORAL);
+            disable.setOnClickListener(v -> showDisablePasswordDialog());
+            row.addView(disable, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        }
+        content.addView(panel);
+    }
+
+    private void showSetPasswordDialog() {
+        LinearLayout form = vertical();
+        form.setPadding(dp(20), dp(12), dp(20), dp(4));
+        EditText current = input("Current password", "");
+        EditText next = input("New password", "");
+        EditText confirm = input("Confirm password", "");
+        current.setSingleLine(true);
+        next.setSingleLine(true);
+        confirm.setSingleLine(true);
+        current.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        next.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        confirm.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        form.addView(text("Passwords are stored as salted hashes. Plain text is never saved.", 14, MUTED, Typeface.NORMAL));
+        if (securityEnabled()) {
+            form.addView(label("Current password"));
+            form.addView(current);
+        }
+        form.addView(label("New password"));
+        form.addView(next);
+        form.addView(label("Confirm password"));
+        form.addView(confirm);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(securityEnabled() ? "Change password" : "Create password")
+                .setView(form)
+                .setPositiveButton("Save", null)
+                .setNegativeButton("Cancel", null)
+                .create();
+        dialog.setOnShowListener(d -> {
+            Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positive.setTextColor(primaryTextColor());
+            positive.setOnClickListener(v -> {
+                if (securityEnabled() && !verifySecurityPassword(current.getText().toString())) {
+                    current.setError("Password does not match");
+                    current.setText("");
+                    return;
+                }
+                String nextPassword = next.getText().toString().trim();
+                if (nextPassword.length() < 4) {
+                    next.setError("Use at least 4 characters");
+                    return;
+                }
+                if (!next.getText().toString().equals(confirm.getText().toString())) {
+                    confirm.setError("Passwords do not match");
+                    confirm.setText("");
+                    return;
+                }
+                setSecurityPassword(nextPassword);
+                appUnlocked = true;
+                saveState();
+                dialog.dismiss();
+                Toast.makeText(this, "Security password saved", Toast.LENGTH_LONG).show();
+                render();
+            });
+            Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (negative != null) {
+                negative.setTextColor(MUTED);
+            }
+        });
+        dialog.show();
+    }
+
+    private void showDisablePasswordDialog() {
+        EditText password = input("Current password", "");
+        password.setSingleLine(true);
+        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Disable password")
+                .setView(password)
+                .setPositiveButton("Disable", null)
+                .setNegativeButton("Cancel", null)
+                .create();
+        dialog.setOnShowListener(d -> {
+            Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positive.setTextColor(CORAL);
+            positive.setOnClickListener(v -> {
+                if (!verifySecurityPassword(password.getText().toString())) {
+                    password.setError("Password does not match");
+                    password.setText("");
+                    return;
+                }
+                state.securityEnabled = false;
+                state.passwordSalt = "";
+                state.passwordHash = "";
+                appUnlocked = true;
+                saveState();
+                dialog.dismiss();
+                Toast.makeText(this, "Security password disabled", Toast.LENGTH_LONG).show();
+                render();
+            });
+            Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (negative != null) {
+                negative.setTextColor(MUTED);
+            }
+        });
+        dialog.show();
     }
 
     private void addAppearancePanel(LinearLayout content) {
@@ -2845,6 +3046,51 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean securityEnabled() {
+        return state != null
+                && state.securityEnabled
+                && !state.passwordSalt.isEmpty()
+                && !state.passwordHash.isEmpty();
+    }
+
+    private void setSecurityPassword(String password) {
+        byte[] salt = new byte[16];
+        new SecureRandom().nextBytes(salt);
+        state.passwordSalt = Base64.encodeToString(salt, Base64.NO_WRAP);
+        state.passwordHash = hashPassword(password, state.passwordSalt);
+        state.securityEnabled = true;
+    }
+
+    private boolean verifySecurityPassword(String password) {
+        if (!securityEnabled()) {
+            return true;
+        }
+        String actual = hashPassword(password.trim(), state.passwordSalt);
+        return constantTimeEquals(actual, state.passwordHash);
+    }
+
+    private String hashPassword(String password, String salt) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(Base64.decode(salt, Base64.NO_WRAP));
+            digest.update(password.getBytes(StandardCharsets.UTF_8));
+            return Base64.encodeToString(digest.digest(), Base64.NO_WRAP);
+        } catch (Exception exception) {
+            return "";
+        }
+    }
+
+    private boolean constantTimeEquals(String first, String second) {
+        byte[] left = first.getBytes(StandardCharsets.UTF_8);
+        byte[] right = second.getBytes(StandardCharsets.UTF_8);
+        int diff = left.length ^ right.length;
+        int length = Math.min(left.length, right.length);
+        for (int i = 0; i < length; i++) {
+            diff |= left[i] ^ right[i];
+        }
+        return diff == 0;
+    }
+
     private AppState loadState() {
         String raw = prefs.getString(STATE_KEY, null);
         if (raw == null) {
@@ -3621,6 +3867,9 @@ public class MainActivity extends Activity {
         String themeName = "Forest";
         String monsterName = "Milo";
         String monsterLastCareDate = "";
+        boolean securityEnabled = false;
+        String passwordSalt = "";
+        String passwordHash = "";
         List<Habit> habits = new ArrayList<>();
         List<Reward> rewards = new ArrayList<>();
         List<MoodEntry> moodEntries = new ArrayList<>();
@@ -3656,6 +3905,9 @@ public class MainActivity extends Activity {
                 json.put("rewardLastDate", rewardLastDate);
                 json.put("monsterName", monsterName);
                 json.put("monsterLastCareDate", monsterLastCareDate);
+                json.put("securityEnabled", securityEnabled);
+                json.put("passwordSalt", passwordSalt);
+                json.put("passwordHash", passwordHash);
                 JSONArray habitArray = new JSONArray();
                 for (Habit habit : habits) {
                     habitArray.put(habit.toJson());
@@ -3718,6 +3970,14 @@ public class MainActivity extends Activity {
             state.rewardLastDate = json.optString("rewardLastDate", "");
             state.monsterName = json.optString("monsterName", "Milo");
             state.monsterLastCareDate = json.optString("monsterLastCareDate", "");
+            state.securityEnabled = json.optBoolean("securityEnabled", false);
+            state.passwordSalt = json.optString("passwordSalt", "");
+            state.passwordHash = json.optString("passwordHash", "");
+            if (state.passwordSalt.isEmpty() || state.passwordHash.isEmpty()) {
+                state.securityEnabled = false;
+                state.passwordSalt = "";
+                state.passwordHash = "";
+            }
 
             JSONArray habits = json.optJSONArray("habits");
             if (habits != null) {

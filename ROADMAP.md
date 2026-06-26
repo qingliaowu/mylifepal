@@ -12,6 +12,7 @@ MyLifePal should support iOS after the Android MVP proves the core habit loop. T
 - Companion monster model: name, growth XP, bond, last care date, level, and evolution stage.
 - Emotion model: dated mood, energy, stress, and optional note entries.
 - Theme model: palette name plus primary, accent, and light background colors.
+- Security model: optional local password lock with enabled state, salt, hash, unlock-on-launch, lock-now, change, disable, and backup portability.
 - Daily completion rule: one completion per habit per calendar day.
 - Atomic habit flow: cue, craving/identity, tiny action, reward.
 - Reminder model: local daily habit notifications that skip completed habits and reschedule after restore, reboot, and app update.
@@ -34,6 +35,7 @@ MyLifePal should support iOS after the Android MVP proves the core habit loop. T
 - Emotion tracker with mood, energy, stress, notes, and 7-day trends.
 - Progress screen with level, attributes, streaks, and achievements.
 - Appearance controls with readable presets and custom colors.
+- Local security password using salted hash storage.
 - Tomato Timer for focus sessions and break rhythm.
 - Offline-first storage using the same JSON-shaped model as Android.
 - Data vault for portable file export, file restore, clipboard fallback, and future cloud sync.
@@ -67,6 +69,7 @@ The Mac app should be the command center for deeper review and planning while pr
 - Mood, energy, stress, and notes.
 - XP, coins, gems, reward shop, inventory, achievements, and companion growth.
 - Theme presets, custom colors, portable JSON export/import, and Android backup-shape import.
+- Local security password should mirror the Android and Windows lock model.
 
 ### Later Mac Enhancements
 
@@ -75,6 +78,31 @@ The Mac app should be the command center for deeper review and planning while pr
 - Cloud sync with explicit user-controlled accounts.
 - Rich charts for Timecap-style activity analytics.
 - Keyboard-first command palette and Shortcuts/App Intents.
+
+## Windows
+
+The Windows app should be a native desktop command center with the same local-first habit game model and a familiar Windows workflow.
+
+### Current Windows MVP
+
+- Native WPF app under `windows/` targeting `.NET 8` and `net8.0-windows`.
+- Sidebar workflow for Today, Tomato Timer, Mood, Habits, Rewards, Progress, and Appearance.
+- Offline JSON state in `%APPDATA%\MyLifePal\mylifepal-windows-state.json`.
+- Atomic habit creation with cue, tiny action, identity, reward, attribute, and reminder time.
+- Reminder and timer notifications while the app is running via the Windows notification area.
+- Tomato Timer with focus, short break, and long break modes.
+- Mood, energy, stress, and notes.
+- XP, coins, gems, reward shop, inventory, achievements, and companion growth.
+- Theme presets, custom colors, portable JSON export/import, and Android backup-shape import.
+- Local security password with salted hash storage, unlock-on-launch, lock-now, change, and disable.
+
+### Later Windows Enhancements
+
+- MSIX packaging and Windows Store metadata.
+- Background reminder task for notifications after the app is closed.
+- System tray quick-complete companion.
+- Windows widgets for next tiny action and focus timer.
+- Rich Timecap-style analytics and keyboard command palette.
 
 ## Chrome Extension
 
@@ -88,6 +116,7 @@ The Chrome extension should keep the same promise in the browser toolbar: fast c
 - Daily habit reminders through `chrome.alarms` and `chrome.notifications`.
 - Background timer completion for Tomato Timer sessions.
 - Color presets, custom hex colors, JSON export/import, rewards, coins, XP, gems, and companion growth.
+- Local security password should be added before store release if browser toolbar data needs extra privacy.
 - No host permissions and no web page reading.
 
 ### Later Extension Enhancements

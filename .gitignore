@@ -1,8 +1,15 @@
 .gradle/
+.kotlin/
 build/
 app/build/
 wear/build/
+**/bin/
+**/obj/
 local.properties
+keystore.properties
+release-secrets/
+*.jks
+*.keystore
 *.apk
 *.aab
 *.iml
