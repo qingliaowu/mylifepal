@@ -7,7 +7,8 @@ MyLifePal should move toward Kotlin as the default Android language while keepin
 - Root Gradle tooling enables `org.jetbrains.kotlin.android` version `2.3.21` with Android Gradle Plugin `8.13.2`.
 - Phone and Wear modules both compile with the Kotlin Android plugin.
 - The Pixel Watch / Wear OS activity has been migrated from Java to Kotlin at `wear/src/main/kotlin/com/mylifepal/watch/WatchActivity.kt`.
-- The phone app still uses Java for the large single-activity MVP surface. It can safely mix Java and Kotlin while screens are moved over incrementally.
+- The phone app reminder scheduler, reminder receiver, and home-screen widget provider have been migrated to Kotlin under `app/src/main/kotlin/com/mylifepal/app/`.
+- The only remaining Android Java source is the large phone MVP activity at `app/src/main/java/com/mylifepal/app/MainActivity.java`. It can safely mix with Kotlin while screens are moved over incrementally.
 
 ## Why Kotlin
 
@@ -22,7 +23,7 @@ MyLifePal should move toward Kotlin as the default Android language while keepin
 2. Move backup serialization and restore validation into Kotlin helpers.
 3. Move password hashing and unlock state into a Kotlin security helper with unit tests.
 4. Split the main phone UI into Kotlin screen builders for Today, Habits, Rewards, Mood, Timer, Progress, and Appearance.
-5. Add Android unit tests for habit completion, streak rollover, reward claims, timer completion, backup import, and password verification.
+5. Add Android unit tests for habit completion, streak rollover, reward claims, timer completion, backup import, reminder scheduling, widget stats, and password verification.
 6. After the phone app is mostly Kotlin, evaluate Jetpack Compose for future UI work instead of continuing to grow imperative view code.
 7. Before iOS parity work, identify state and rules that could become a Kotlin Multiplatform shared core.
 

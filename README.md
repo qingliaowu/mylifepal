@@ -16,7 +16,7 @@ Windows support is included through a native WPF desktop app targeting .NET 8. I
 
 An iOS release is planned for a future version. The app keeps its habit, reward, and progress data model simple and JSON-shaped so the core loop can be carried to a native iOS app later without redesigning the product from scratch. See `ROADMAP.md`.
 
-The Android codebase is being migrated toward Kotlin. Kotlin Gradle tooling is enabled for the phone and Wear modules, and the Wear OS activity has been moved to Kotlin. See `KOTLIN_MIGRATION.md`.
+The Android codebase is being migrated toward Kotlin. Kotlin Gradle tooling is enabled for the phone and Wear modules. Wear OS, phone reminders, and the home-screen widget provider are Kotlin now, with the large phone activity still scheduled for incremental migration. See `KOTLIN_MIGRATION.md`.
 
 ## Build
 
